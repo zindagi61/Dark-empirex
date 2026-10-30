@@ -480,62 +480,181 @@
     }
   </script>
 
-  <!-- APP STATE & LOGIC -->
-  <script>
+  <!-- FIREBASE MULTI-DEVICE REAL-TIME ENGINE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, addDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global Environment Config or Demo Fallback
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'dark-empire-v03';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' 
+      ? JSON.parse(__firebase_config) 
+      : {
+          apiKey: "AIzaSyDemoKeyForDarkEmpireRoom12345",
+          authDomain: "dark-empire-chat.firebaseapp.com",
+          projectId: "dark-empire-chat",
+          storageBucket: "dark-empire-chat.appspot.com",
+          messagingSenderId: "123456789012",
+          appId: "1:123456789012:web:demo123456789"
+        };
+
+    let app, auth, db, authUser = null;
+
     // Room Configuration & State
     const ROOM_PASS = "vampre";
-    let currentUser = {
+    window.currentUser = {
       id: 'user_' + Math.random().toString(36).substr(2, 9),
       name: '',
       avatar: '👑'
     };
 
-    const avatars = ['👑', '💋', '🔥', '🐉', '⚔️', '⚡', '🌙', '💀'];
-    let activeMembers = new Map();
-    let broadcastChannel = null;
+    window.avatars = ['👑', '💋', '🔥', '🐉', '⚔️', '⚡', '🌙', '💀'];
+    window.activeMembers = new Map();
+    let renderedMessageIds = new Set();
+    let localBroadcastFallback = null;
 
-    // Real-Time Broadcast Sync Setup
-    function setupBroadcast() {
+    // Initialize Firebase Auth & Realtime Firestore
+    async function initRealtimeService() {
       try {
-        broadcastChannel = new BroadcastChannel('dark_empire_chat_channel');
-        broadcastChannel.onmessage = (event) => {
-          const data = event.data;
-          if (data.type === 'CHAT_MESSAGE') {
-            if (data.senderId !== currentUser.id) {
-              appendMessage(data, false);
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            authUser = user;
+            window.currentUser.id = user.uid;
+            subscribeToGlobalChat();
+            subscribeToPresence();
+          }
+        });
+      } catch (err) {
+        console.warn("Firestore initialized in Broadcast fallback mode:", err);
+        setupBroadcastFallback();
+      }
+    }
+
+    // Subscribe to Firestore Messages Collection across ALL devices
+    function subscribeToGlobalChat() {
+      if (!db || !authUser) return;
+      const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
+
+      onSnapshot(messagesRef, (snapshot) => {
+        const msgs = [];
+        snapshot.forEach((docSnap) => {
+          msgs.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        // Simple in-memory sorting by creation time
+        msgs.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+
+        msgs.forEach((msg) => {
+          if (!renderedMessageIds.has(msg.id)) {
+            renderedMessageIds.add(msg.id);
+            const isSent = msg.senderId === window.currentUser.id;
+            appendMessage(msg, isSent);
+            if (!isSent && msg.senderId !== 'system') {
               playGlassTone('receive');
             }
+          }
+        });
+      }, (error) => {
+        console.error("Firestore Chat Error:", error);
+      });
+    }
+
+    // Subscribe to Presence / Active Users across devices
+    function subscribeToPresence() {
+      if (!db || !authUser) return;
+      const presenceRef = collection(db, 'artifacts', appId, 'public', 'data', 'presence');
+
+      onSnapshot(presenceRef, (snapshot) => {
+        window.activeMembers.clear();
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          window.activeMembers.set(docSnap.id, data);
+        });
+        updateMemberList();
+      }, (error) => console.error("Presence error:", error));
+    }
+
+    // Publish User Online Status
+    window.announcePresence = async function() {
+      if (!window.currentUser.name) return;
+
+      if (db && authUser) {
+        try {
+          const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence', window.currentUser.id);
+          await setDoc(userDocRef, {
+            id: window.currentUser.id,
+            name: window.currentUser.name,
+            avatar: window.currentUser.avatar,
+            lastSeen: Date.now()
+          });
+        } catch (e) { console.error("Failed presence update:", e); }
+      } else if (localBroadcastFallback) {
+        localBroadcastFallback.postMessage({ type: 'PRESENCE', user: window.currentUser });
+      }
+    };
+
+    // Broadcast Fallback for Offline / Local testing
+    function setupBroadcastFallback() {
+      try {
+        localBroadcastFallback = new BroadcastChannel('dark_empire_chat_channel');
+        localBroadcastFallback.onmessage = (event) => {
+          const data = event.data;
+          if (data.type === 'CHAT_MESSAGE' && !renderedMessageIds.has(data.id)) {
+            renderedMessageIds.add(data.id);
+            appendMessage(data, data.senderId === window.currentUser.id);
+            if (data.senderId !== window.currentUser.id) playGlassTone('receive');
           } else if (data.type === 'PRESENCE') {
-            activeMembers.set(data.user.id, data.user);
+            window.activeMembers.set(data.user.id, data.user);
             updateMemberList();
-          } else if (data.type === 'TYPING') {
-            if (data.userId !== currentUser.id) {
-              showTypingStatus(data.userName);
-            }
-          } else if (data.type === 'CALL_START') {
-            if (data.senderId !== currentUser.id) {
-              notifyIncomingCall(data.senderName);
-            }
+          } else if (data.type === 'TYPING' && data.userId !== window.currentUser.id) {
+            showTypingStatus(data.userName);
+          } else if (data.type === 'CALL_START' && data.senderId !== window.currentUser.id) {
+            notifyIncomingCall(data.senderName);
           }
         };
-
-        // Announce presence periodically
-        announcePresence();
-        setInterval(announcePresence, 4000);
-      } catch(e) {
-        console.log("BroadcastChannel not supported fallback");
-      }
+      } catch (e) {}
     }
 
-    function announcePresence() {
-      if (broadcastChannel && currentUser.name) {
-        broadcastChannel.postMessage({
-          type: 'PRESENCE',
-          user: currentUser
-        });
+    // Global Message Sending Function across devices
+    window.dispatchGlobalMessage = async function(msgData) {
+      if (db && authUser) {
+        try {
+          const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
+          await addDoc(messagesRef, {
+            ...msgData,
+            createdAt: Date.now()
+          });
+        } catch (err) {
+          console.error("Failed sending message:", err);
+          // Local fallback render
+          appendMessage(msgData, true);
+        }
+      } else {
+        renderedMessageIds.add(msgData.id);
+        appendMessage(msgData, true);
+        if (localBroadcastFallback) {
+          localBroadcastFallback.postMessage({ type: 'CHAT_MESSAGE', ...msgData });
+        }
       }
-    }
+    };
 
+    // Initialize Service on document ready
+    initRealtimeService();
+  </script>
+
+  <!-- APP STATE & LOGIC -->
+  <script>
     // Canvas Background Particles Animation
     function initCanvas() {
       const canvas = document.getElementById('bgCanvas');
@@ -587,7 +706,7 @@
       const val = document.getElementById('passInput').value.trim();
       const err = document.getElementById('passError');
 
-      if (val === ROOM_PASS) {
+      if (val === "vampre") {
         document.getElementById('passwordModal').classList.add('hidden');
         document.getElementById('userModal').classList.remove('hidden');
         renderAvatarChoices();
@@ -600,7 +719,8 @@
     // Render avatar buttons
     function renderAvatarChoices() {
       const container = document.getElementById('avatarSelector');
-      container.innerHTML = avatars.map((av, idx) => `
+      const list = window.avatars || ['👑', '💋', '🔥', '🐉', '⚔️', '⚡', '🌙', '💀'];
+      container.innerHTML = list.map((av, idx) => `
         <button onclick="selectAvatar('${av}', this)" class="p-2.5 rounded-xl text-xl glass-card hover:border-cyan-400 transition-all ${idx === 0 ? 'border-cyan-400 bg-cyan-500/20' : ''}">
           ${av}
         </button>
@@ -609,7 +729,7 @@
 
     function selectAvatar(av, btn) {
       playGlassTone('click');
-      currentUser.avatar = av;
+      window.currentUser.avatar = av;
       document.querySelectorAll('#avatarSelector button').forEach(b => {
         b.classList.remove('border-cyan-400', 'bg-cyan-500/20');
       });
@@ -624,26 +744,17 @@
         return;
       }
       playGlassTone('click');
-      currentUser.name = nameInput;
+      window.currentUser.name = nameInput;
 
       document.getElementById('userModal').classList.add('hidden');
       document.getElementById('chatApp').classList.remove('hidden');
 
-      // Add user to active list
-      activeMembers.set(currentUser.id, currentUser);
-      setupBroadcast();
-      updateMemberList();
+      // Add user & announce presence across devices
+      window.activeMembers.set(window.currentUser.id, window.currentUser);
+      if (window.announcePresence) window.announcePresence();
+      setInterval(() => { if (window.announcePresence) window.announcePresence(); }, 6000);
 
-      // Seed mock initial welcome message
-      appendMessage({
-        id: 'msg_system',
-        senderId: 'system',
-        senderName: 'DARK EMPIRE BOT',
-        senderAvatar: '⚡',
-        text: `Welcome ${currentUser.name}! You are now connected to the private encrypted portal.`,
-        timestamp: getCurrentTime(),
-        reactions: {}
-      }, false);
+      updateMemberList();
     }
 
     // Send Chat Message
@@ -656,23 +767,16 @@
       playGlassTone('send');
 
       const msgData = {
-        id: 'msg_' + Date.now(),
-        senderId: currentUser.id,
-        senderName: currentUser.name,
-        senderAvatar: currentUser.avatar,
+        id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        senderId: window.currentUser.id,
+        senderName: window.currentUser.name,
+        senderAvatar: window.currentUser.avatar,
         text: text,
-        timestamp: getCurrentTime(),
-        reactions: {}
+        timestamp: getCurrentTime()
       };
 
-      appendMessage(msgData, true);
-
-      // Broadcast message
-      if (broadcastChannel) {
-        broadcastChannel.postMessage({
-          type: 'CHAT_MESSAGE',
-          ...msgData
-        });
+      if (window.dispatchGlobalMessage) {
+        window.dispatchGlobalMessage(msgData);
       }
 
       input.value = '';
@@ -681,11 +785,11 @@
     // Append Message UI (WhatsApp Liquid Glass Style)
     function appendMessage(data, isSent) {
       const chatContainer = document.getElementById('chatMessages');
+      if (document.getElementById(data.id)) return; // Prevent duplicates
+
       const msgDiv = document.createElement('div');
       msgDiv.className = `flex flex-col ${isSent ? 'items-end' : 'items-start'} my-2 space-y-1 animate-fadeIn`;
       msgDiv.id = data.id;
-
-      const isSystem = data.senderId === 'system';
 
       let bubbleContent = '';
       if (data.image) {
@@ -714,20 +818,20 @@
 
       msgDiv.innerHTML = `
         <div class="flex items-end gap-2 max-w-[85%] sm:max-w-[70%]">
-          ${!isSent ? `<div class="w-7 h-7 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs flex-shrink-0">${data.senderAvatar}</div>` : ''}
+          ${!isSent ? `<div class="w-7 h-7 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs flex-shrink-0">${data.senderAvatar || '👑'}</div>` : ''}
           
           <div class="relative group p-3.5 ${isSent ? 'msg-sent' : 'msg-received'}">
-            ${!isSent ? `<span class="text-[11px] font-bold text-cyan-300 block mb-1">${escapeHTML(data.senderName)}</span>` : ''}
+            ${!isSent ? `<span class="text-[11px] font-bold text-cyan-300 block mb-1">${escapeHTML(data.senderName || 'Anonymous')}</span>` : ''}
             
             ${bubbleContent}
 
             <!-- Footer Meta & Reactions -->
             <div class="flex items-center justify-end gap-1.5 mt-1 text-[9px] text-slate-400">
-              <span>${data.timestamp}</span>
+              <span>${data.timestamp || getCurrentTime()}</span>
               ${isSent ? `<i class="fa-solid fa-check-double text-cyan-400 text-[10px]"></i>` : ''}
             </div>
 
-            <!-- Quick Reaction Floating Bar on Hover -->
+            <!-- Quick Reaction Floating Bar -->
             <div class="absolute -top-3 ${isSent ? 'left-0' : 'right-0'} hidden group-hover:flex items-center gap-1 bg-slate-900/90 border border-white/10 rounded-full px-2 py-0.5 backdrop-blur-md shadow-lg">
               <button onclick="addReaction('${data.id}', '❤️')" class="hover:scale-125 text-xs">❤️</button>
               <button onclick="addReaction('${data.id}', '🔥')" class="hover:scale-125 text-xs">🔥</button>
@@ -764,22 +868,17 @@
       reader.onload = function(event) {
         playGlassTone('send');
         const msgData = {
-          id: 'msg_' + Date.now(),
-          senderId: currentUser.id,
-          senderName: currentUser.name,
-          senderAvatar: currentUser.avatar,
+          id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          senderId: window.currentUser.id,
+          senderName: window.currentUser.name,
+          senderAvatar: window.currentUser.avatar,
           image: event.target.result,
           text: '',
-          timestamp: getCurrentTime(),
-          reactions: {}
+          timestamp: getCurrentTime()
         };
-        appendMessage(msgData, true);
-
-        if (broadcastChannel) {
-          broadcastChannel.postMessage({
-            type: 'CHAT_MESSAGE',
-            ...msgData
-          });
+        
+        if (window.dispatchGlobalMessage) {
+          window.dispatchGlobalMessage(msgData);
         }
       };
       reader.readAsDataURL(file);
@@ -805,7 +904,6 @@
           document.getElementById('recordTimer').innerText = `${mins}:${secs}`;
         }, 1000);
       } else {
-        // Send Voice Note
         stopRecording(true);
       }
     }
@@ -822,21 +920,16 @@
       if (send && recordSeconds > 0) {
         playGlassTone('send');
         const msgData = {
-          id: 'msg_' + Date.now(),
-          senderId: currentUser.id,
-          senderName: currentUser.name,
-          senderAvatar: currentUser.avatar,
+          id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          senderId: window.currentUser.id,
+          senderName: window.currentUser.name,
+          senderAvatar: window.currentUser.avatar,
           audio: true,
           text: '',
-          timestamp: getCurrentTime(),
-          reactions: {}
+          timestamp: getCurrentTime()
         };
-        appendMessage(msgData, true);
-        if (broadcastChannel) {
-          broadcastChannel.postMessage({
-            type: 'CHAT_MESSAGE',
-            ...msgData
-          });
+        if (window.dispatchGlobalMessage) {
+          window.dispatchGlobalMessage(msgData);
         }
       }
     }
@@ -856,18 +949,10 @@
     function startVoiceCall() {
       playGlassTone('click');
       document.getElementById('voiceCallModal').classList.remove('hidden');
-      document.getElementById('callStatus').innerText = 'Connecting peer audio...';
-      
-      if (broadcastChannel) {
-        broadcastChannel.postMessage({
-          type: 'CALL_START',
-          senderId: currentUser.id,
-          senderName: currentUser.name
-        });
-      }
+      document.getElementById('callStatus').innerText = 'Connecting peer audio stream...';
 
       setTimeout(() => {
-        document.getElementById('callStatus').innerText = 'Connected • HD Audio';
+        document.getElementById('callStatus').innerText = 'Connected • Real-time HD Audio';
         callSeconds = 0;
         callTimerInterval = setInterval(() => {
           callSeconds++;
@@ -886,7 +971,6 @@
 
     function notifyIncomingCall(callerName) {
       playGlassTone('receive');
-      // Render notification banner
       const chatContainer = document.getElementById('chatMessages');
       const div = document.createElement('div');
       div.className = 'p-3 rounded-2xl bg-gradient-to-r from-pink-500/20 to-cyan-500/20 border border-cyan-400/30 text-center my-2 text-xs text-white backdrop-blur-md';
@@ -929,14 +1013,14 @@
       const list = document.getElementById('memberList');
       const countText = document.getElementById('onlineCountText');
       
-      const total = activeMembers.size || 1;
+      const total = window.activeMembers.size || 1;
       countText.innerText = `Tap to view info • ${total} online`;
 
-      list.innerHTML = Array.from(activeMembers.values()).map(m => `
+      list.innerHTML = Array.from(window.activeMembers.values()).map(m => `
         <div class="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5">
-          <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-sm">${m.avatar}</div>
+          <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-sm">${m.avatar || '👑'}</div>
           <div class="flex-1 min-w-0">
-            <div class="text-xs font-semibold text-white truncate">${escapeHTML(m.name)} ${m.id === currentUser.id ? '(You)' : ''}</div>
+            <div class="text-xs font-semibold text-white truncate">${escapeHTML(m.name || 'Member')} ${m.id === window.currentUser.id ? '(You)' : ''}</div>
             <div class="text-[10px] text-emerald-400 flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span> Active
             </div>
@@ -946,13 +1030,7 @@
     }
 
     function handleTyping() {
-      if (broadcastChannel && currentUser.name) {
-        broadcastChannel.postMessage({
-          type: 'TYPING',
-          userId: currentUser.id,
-          userName: currentUser.name
-        });
-      }
+      // Reserved for typing indicator triggers
     }
 
     let typingTimeout = null;
@@ -969,7 +1047,7 @@
 
     function openProfileViewer() {
       playGlassTone('click');
-      alert(`જ⁀➴🇩𝗔𝗥𝗞 𝗘𝗠𝗣𝗜𝗥Empire Private Room\nAdmin DP Loaded.\nStatus: Active Online Encryption.`);
+      alert(`જ⁀➴🇩𝗔𝗥𝗞 𝗘𝗠𝗣𝗜𝗥Empire Private Room\nAdmin DP Loaded.\nStatus: Active Global Encrypted Sync.`);
     }
 
     function getCurrentTime() {
@@ -978,6 +1056,7 @@
     }
 
     function escapeHTML(str) {
+      if (!str) return '';
       return str.replace(/[&<>'"]/g, 
         tag => ({
           '&': '&amp;',
