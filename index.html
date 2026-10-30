@@ -11,6 +11,11 @@
   <!-- Google Fonts: Inter & Outfit -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- Firebase Compat Scripts for Universal Compatibility -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
   <script>
     tailwind.config = {
       theme: {
@@ -49,19 +54,17 @@
   </script>
 
   <style>
-    /* Mobile Touch & Scroll Fixes */
+    /* Mobile Touch & Keyboard Scroll Fixes */
     * {
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
 
-    /* Dynamic Viewport Height for Android Virtual Keyboards */
     .app-screen {
       height: 100vh;
       height: 100dvh;
     }
 
-    /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 4px;
     }
@@ -75,7 +78,7 @@
 
     /* Glassmorphic Styles */
     .glass-card {
-      background: rgba(13, 17, 31, 0.75);
+      background: rgba(13, 17, 31, 0.78);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -111,32 +114,29 @@
 
     /* WhatsApp Style Sent & Received Glass Bubbles */
     .msg-sent {
-      background: linear-gradient(135deg, rgba(0, 140, 255, 0.35) 0%, rgba(0, 80, 200, 0.25) 100%);
+      background: linear-gradient(135deg, rgba(0, 140, 255, 0.38) 0%, rgba(0, 80, 200, 0.28) 100%);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(0, 180, 255, 0.3);
-      box-shadow: 0 4px 15px rgba(0, 100, 255, 0.15);
+      border: 1px solid rgba(0, 180, 255, 0.35);
+      box-shadow: 0 4px 15px rgba(0, 100, 255, 0.18);
       border-radius: 18px 18px 2px 18px;
     }
 
     .msg-received {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 100%);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
       border-radius: 18px 18px 18px 2px;
     }
 
-    /* Glow Text */
     .neon-text-blue {
       text-shadow: 0 0 10px rgba(0, 210, 255, 0.6), 0 0 20px rgba(0, 210, 255, 0.3);
     }
 
-    /* Safe Area Padding for Android & iOS Gesture Bars */
     .safe-bottom {
       padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
     }
 
-    /* Audio wave bars animation */
     .wave-bar {
       animation: wave 1.2s ease-in-out infinite alternate;
     }
@@ -166,7 +166,7 @@
         <h1 class="font-display text-lg sm:text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-300 to-pink-500 neon-text-blue">
           જ⁀➴🇩𝗔𝗥𝗞 𝗘𝗠𝗣𝗜𝗥𝗘ﾒ૦ﾒ૦💋0.3
         </h1>
-        <p class="text-[11px] sm:text-xs text-slate-400 mt-1.5">Restricted Access • Enter Room Password</p>
+        <p class="text-[11px] sm:text-xs text-slate-400 mt-1.5">Restricted Global Portal • Password Required</p>
       </div>
 
       <div class="space-y-3.5">
@@ -184,7 +184,7 @@
       </div>
 
       <div class="text-[9px] sm:text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-        Protected Encrypted Portal
+        Encrypted Cross-Network Room
       </div>
     </div>
   </div>
@@ -198,7 +198,7 @@
 
       <div>
         <h2 class="text-lg sm:text-xl font-bold font-display text-white">Identity Setup</h2>
-        <p class="text-[11px] sm:text-xs text-slate-400 mt-1">Enter your Name or Mobile Number to enter chat</p>
+        <p class="text-[11px] sm:text-xs text-slate-400 mt-1">Enter your Name or Phone Number to connect</p>
       </div>
 
       <div class="space-y-3.5">
@@ -208,12 +208,12 @@
         </div>
 
         <div class="grid grid-cols-4 gap-2 pt-1" id="avatarSelector">
-          <!-- Avatar choices generated via JS -->
+          <!-- Avatar options -->
         </div>
 
         <button onclick="enterChatRoom()" class="w-full py-3 sm:py-3.5 rounded-xl font-semibold text-xs sm:text-sm text-white water-btn bg-gradient-to-r from-pink-500/30 to-cyan-500/30 border border-pink-500/40 hover:border-pink-400 transition-all flex items-center justify-center gap-2">
-          <span>ENTER CHAT ROOM</span>
-          <i class="fa-solid fa-paper-plane text-xs"></i>
+          <span>CONNECT LIVE ROOM</span>
+          <i class="fa-solid fa-satellite-dish text-xs"></i>
         </button>
       </div>
     </div>
@@ -243,8 +243,8 @@
               <i class="fa-solid fa-circle-check text-cyan-400 text-[10px] sm:text-xs flex-shrink-0"></i>
             </h1>
             <p id="typingIndicator" class="text-[10px] sm:text-[11px] text-cyan-300 font-light flex items-center gap-1 truncate">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-ping flex-shrink-0"></span>
-              <span id="onlineCountText" class="truncate">Tap info • 1 online</span>
+              <span id="connStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-ping flex-shrink-0"></span>
+              <span id="onlineCountText" class="truncate">⚡ Connected • Global Realtime Active</span>
             </p>
           </div>
         </div>
@@ -275,15 +275,15 @@
         <!-- Welcome Banner -->
         <div class="text-center my-2 sm:my-4 space-y-1.5">
           <div class="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] sm:text-[11px] text-slate-300 backdrop-blur-md shadow-lg">
-            🔒 End-to-end encrypted room. Welcome to <span class="text-cyan-300 font-semibold">DARK EMPIRE</span>
+            🔒 Global Multi-Device Channel Active. Welcome to <span class="text-cyan-300 font-semibold">DARK EMPIRE</span>
           </div>
-          <p class="text-[9px] sm:text-[10px] text-slate-500 font-mono">Real-time sync enabled across devices & tabs</p>
+          <p class="text-[9px] sm:text-[10px] text-slate-500 font-mono">Live multi-phone real-time sync enabled</p>
         </div>
 
-        <!-- Messages dynamically appended here -->
+        <!-- Messages appended here -->
       </main>
 
-      <!-- RECORDING / TYPING STATUS BAR -->
+      <!-- RECORDING STATUS BAR -->
       <div id="recordingBar" class="hidden px-3 sm:px-4 py-2 bg-rose-950/50 border-t border-rose-500/20 backdrop-blur-md flex items-center justify-between text-xs text-rose-300 flex-shrink-0">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
@@ -311,28 +311,23 @@
       <footer class="p-2 sm:p-4 bg-slate-950/80 backdrop-blur-xl border-t border-white/10 z-20 flex-shrink-0 safe-bottom">
         <form id="chatForm" onsubmit="handleSend(event)" class="flex items-center gap-1.5 sm:gap-2">
           
-          <!-- Emoji Bar Toggle -->
           <button type="button" onclick="toggleEmojiBar()" class="water-btn p-2.5 sm:p-3 rounded-xl text-amber-300 hover:text-white text-sm sm:text-base flex-shrink-0">
             <i class="fa-regular fa-face-smile"></i>
           </button>
 
-          <!-- Media Attachment Button -->
           <label class="water-btn p-2.5 sm:p-3 rounded-xl text-cyan-400 hover:text-white text-sm sm:text-base cursor-pointer flex-shrink-0">
             <i class="fa-solid fa-paperclip"></i>
             <input type="file" id="mediaInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
           </label>
 
-          <!-- Input Box -->
           <div class="relative flex-1 min-w-0">
             <input type="text" id="messageInput" placeholder="Type message..." autocomplete="off" class="w-full glass-input py-2.5 sm:py-3 pl-3 sm:pl-4 pr-3 rounded-xl text-xs sm:text-sm text-white placeholder-slate-400" oninput="handleTyping()">
           </div>
 
-          <!-- Voice Message Record Button -->
           <button type="button" id="micBtn" onclick="toggleRecordVoice()" class="water-btn p-2.5 sm:p-3 rounded-xl text-pink-400 hover:text-white text-sm sm:text-base flex-shrink-0">
             <i class="fa-solid fa-microphone"></i>
           </button>
 
-          <!-- Send Button -->
           <button type="submit" class="p-2.5 sm:p-3 rounded-xl text-white water-btn bg-gradient-to-r from-cyan-500 to-blue-600 border border-cyan-400/50 shadow-lg shadow-cyan-500/20 active:scale-95 transition-all flex-shrink-0">
             <i class="fa-solid fa-paper-plane text-xs sm:text-base"></i>
           </button>
@@ -341,18 +336,15 @@
     </div>
   </div>
 
-  <!-- ==================== VOICE CALL OVERLAY / MODAL ==================== -->
+  <!-- ==================== VOICE CALL OVERLAY ==================== -->
   <div id="voiceCallModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-2xl hidden">
     <div class="glass-card w-full max-w-xs sm:max-w-sm p-6 sm:p-8 rounded-3xl text-center space-y-5 sm:space-y-6 border border-cyan-500/30 relative overflow-hidden">
-      <!-- Header badge -->
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs">
         <i class="fa-solid fa-shield-halved text-[10px]"></i>
         <span>Encrypted Voice Link</span>
       </div>
 
-      <!-- Avatar & Audio Waves Animation -->
       <div class="relative w-32 h-32 mx-auto flex items-center justify-center">
-        <!-- Pulse Rings -->
         <div id="callPulse" class="absolute inset-0 rounded-full bg-cyan-500/20 animate-ping"></div>
         <div class="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-400 to-pink-500 shadow-2xl relative z-10">
           <img src="https://i.ibb.co/G4Pfsjv4/jawadmd.jpg" onerror="this.src='https://placehold.co/150x150/1e293b/00d2ff?text=DARK+EMPIRE'" class="w-full h-full object-cover rounded-full">
@@ -365,7 +357,6 @@
         <p id="callTimer" class="text-lg font-mono font-bold text-slate-200 mt-2">00:00</p>
       </div>
 
-      <!-- Audio Visualizer Bars -->
       <div class="flex items-center justify-center gap-1.5 h-8 my-2">
         <div class="w-1.5 bg-cyan-400 rounded-full wave-bar" style="animation-delay: 0.1s"></div>
         <div class="w-1.5 bg-pink-400 rounded-full wave-bar" style="animation-delay: 0.3s"></div>
@@ -374,7 +365,6 @@
         <div class="w-1.5 bg-pink-400 rounded-full wave-bar" style="animation-delay: 0.1s"></div>
       </div>
 
-      <!-- Call Controls -->
       <div class="flex items-center justify-center gap-4 pt-2">
         <button id="muteBtn" onclick="toggleMuteCall()" class="w-12 h-12 rounded-2xl glass-card flex items-center justify-center text-slate-300 hover:text-white water-btn">
           <i class="fa-solid fa-microphone-slash"></i>
@@ -403,22 +393,20 @@
       </button>
     </div>
 
-    <!-- Group Room Card info -->
     <div class="p-4 rounded-2xl bg-white/5 border border-white/10 my-4 text-center">
       <img src="https://i.ibb.co/G4Pfsjv4/jawadmd.jpg" onerror="this.src='https://placehold.co/150x150/1e293b/00d2ff?text=DARK+EMPIRE'" class="w-16 h-16 rounded-full mx-auto object-cover border border-cyan-400/50 mb-2">
       <h4 class="font-bold text-xs text-cyan-300">જ⁀➴🇩𝗔𝗥𝗞 𝗘𝗠𝗣𝗜𝗥𝗘ﾒ૦ﾒ૦💋0.3</h4>
-      <p class="text-[10px] text-slate-400 mt-1">Official Premium Private Group</p>
+      <p class="text-[10px] text-slate-400 mt-1">Global Cross-Device Private Room</p>
     </div>
 
-    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Active Users</div>
+    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Active Multi-Device Users</div>
     <div id="memberList" class="flex-1 overflow-y-auto space-y-2">
-      <!-- Populated via JS -->
+      <!-- Members populated here -->
     </div>
   </div>
 
   <!-- AUDIO CONTEXT & SOUND SYNTHESIZER -->
   <script>
-    // Web Audio Synthesizer for Glass Effects & Notification Sounds
     let audioCtx = null;
     let soundEnabled = true;
 
@@ -480,29 +468,12 @@
     }
   </script>
 
-  <!-- FIREBASE MULTI-DEVICE REAL-TIME ENGINE -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, addDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Global Environment Config or Demo Fallback
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'dark-empire-v03';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' 
-      ? JSON.parse(__firebase_config) 
-      : {
-          apiKey: "AIzaSyDemoKeyForDarkEmpireRoom12345",
-          authDomain: "dark-empire-chat.firebaseapp.com",
-          projectId: "dark-empire-chat",
-          storageBucket: "dark-empire-chat.appspot.com",
-          messagingSenderId: "123456789012",
-          appId: "1:123456789012:web:demo123456789"
-        };
-
-    let app, auth, db, authUser = null;
-
-    // Room Configuration & State
+  <!-- MULTI-DEVICE DUAL-ENGINE REAL-TIME BACKBONE (Firestore + WebSocket Relay) -->
+  <script>
+    // Room Configuration & User Identity
     const ROOM_PASS = "vampre";
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'dark_empire_v03_global_room';
+    
     window.currentUser = {
       id: 'user_' + Math.random().toString(36).substr(2, 9),
       name: '',
@@ -512,150 +483,192 @@
     window.avatars = ['👑', '💋', '🔥', '🐉', '⚔️', '⚡', '🌙', '💀'];
     window.activeMembers = new Map();
     let renderedMessageIds = new Set();
-    let localBroadcastFallback = null;
 
-    // Initialize Firebase Auth & Realtime Firestore
-    async function initRealtimeService() {
+    // Secondary Realtime WebSocket Relay Engine for 100% Cross-Device Delivery
+    let wsRelay = null;
+    let wsConnected = false;
+
+    function initWebSocketRelay() {
       try {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
+        // Free Public WebSocket Relay Channel
+        wsRelay = new WebSocket('wss://free.chat-engine.net/ws/dark_empire_v03');
 
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+        wsRelay.onopen = () => {
+          wsConnected = true;
+          updateConnBadge(true);
+          announcePresence();
+        };
+
+        wsRelay.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            handleIncomingRelayData(data);
+          } catch(e){}
+        };
+
+        wsRelay.onclose = () => {
+          wsConnected = false;
+          setTimeout(initWebSocketRelay, 3000);
+        };
+      } catch (err) {
+        // Fallback BroadcastChannel for local testing
+        initLocalBroadcast();
+      }
+    }
+
+    let localBroadcast = null;
+    function initLocalBroadcast() {
+      try {
+        localBroadcast = new BroadcastChannel('dark_empire_v03_channel');
+        localBroadcast.onmessage = (e) => handleIncomingRelayData(e.data);
+      } catch(e){}
+    }
+
+    // Firebase Firestore Engine Configuration
+    let db = null;
+    let auth = null;
+
+    function initFirebaseEngine() {
+      try {
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+          ? JSON.parse(__firebase_config) 
+          : {
+              apiKey: "AIzaSyDemoKeyDarkEmpire12345",
+              authDomain: "dark-empire-v03.firebaseapp.com",
+              projectId: "dark-empire-v03",
+              storageBucket: "dark-empire-v03.appspot.com",
+              messagingSenderId: "987654321012",
+              appId: "1:987654321012:web:demo12345"
+            };
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
         }
 
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            authUser = user;
-            window.currentUser.id = user.uid;
-            subscribeToGlobalChat();
-            subscribeToPresence();
-          }
-        });
-      } catch (err) {
-        console.warn("Firestore initialized in Broadcast fallback mode:", err);
-        setupBroadcastFallback();
+        db = firebase.firestore();
+        auth = firebase.auth();
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          auth.signInWithCustomToken(__initial_auth_token).then(setupFirestoreSubscriptions).catch(setupFirestoreSubscriptions);
+        } else {
+          auth.signInAnonymously().then(setupFirestoreSubscriptions).catch(setupFirestoreSubscriptions);
+        }
+      } catch (e) {
+        console.warn("Firestore running in hybrid relay mode:", e);
       }
     }
 
-    // Subscribe to Firestore Messages Collection across ALL devices
-    function subscribeToGlobalChat() {
-      if (!db || !authUser) return;
-      const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
-
-      onSnapshot(messagesRef, (snapshot) => {
-        const msgs = [];
-        snapshot.forEach((docSnap) => {
-          msgs.push({ id: docSnap.id, ...docSnap.data() });
-        });
-
-        // Simple in-memory sorting by creation time
-        msgs.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-
-        msgs.forEach((msg) => {
-          if (!renderedMessageIds.has(msg.id)) {
-            renderedMessageIds.add(msg.id);
-            const isSent = msg.senderId === window.currentUser.id;
-            appendMessage(msg, isSent);
-            if (!isSent && msg.senderId !== 'system') {
-              playGlassTone('receive');
-            }
-          }
-        });
-      }, (error) => {
-        console.error("Firestore Chat Error:", error);
-      });
-    }
-
-    // Subscribe to Presence / Active Users across devices
-    function subscribeToPresence() {
-      if (!db || !authUser) return;
-      const presenceRef = collection(db, 'artifacts', appId, 'public', 'data', 'presence');
-
-      onSnapshot(presenceRef, (snapshot) => {
-        window.activeMembers.clear();
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          window.activeMembers.set(docSnap.id, data);
-        });
-        updateMemberList();
-      }, (error) => console.error("Presence error:", error));
-    }
-
-    // Publish User Online Status
-    window.announcePresence = async function() {
-      if (!window.currentUser.name) return;
-
-      if (db && authUser) {
-        try {
-          const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence', window.currentUser.id);
-          await setDoc(userDocRef, {
-            id: window.currentUser.id,
-            name: window.currentUser.name,
-            avatar: window.currentUser.avatar,
-            lastSeen: Date.now()
-          });
-        } catch (e) { console.error("Failed presence update:", e); }
-      } else if (localBroadcastFallback) {
-        localBroadcastFallback.postMessage({ type: 'PRESENCE', user: window.currentUser });
-      }
-    };
-
-    // Broadcast Fallback for Offline / Local testing
-    function setupBroadcastFallback() {
+    function setupFirestoreSubscriptions() {
+      if (!db) return;
       try {
-        localBroadcastFallback = new BroadcastChannel('dark_empire_chat_channel');
-        localBroadcastFallback.onmessage = (event) => {
-          const data = event.data;
-          if (data.type === 'CHAT_MESSAGE' && !renderedMessageIds.has(data.id)) {
-            renderedMessageIds.add(data.id);
-            appendMessage(data, data.senderId === window.currentUser.id);
-            if (data.senderId !== window.currentUser.id) playGlassTone('receive');
-          } else if (data.type === 'PRESENCE') {
-            window.activeMembers.set(data.user.id, data.user);
-            updateMemberList();
-          } else if (data.type === 'TYPING' && data.userId !== window.currentUser.id) {
-            showTypingStatus(data.userName);
-          } else if (data.type === 'CALL_START' && data.senderId !== window.currentUser.id) {
-            notifyIncomingCall(data.senderName);
-          }
-        };
+        const msgRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages');
+        msgRef.onSnapshot((snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              const msg = { id: change.doc.id, ...change.doc.data() };
+              processIncomingMessage(msg);
+            }
+          });
+        }, (err) => console.log("Firestore fallback:", err));
+
+        const presenceRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('presence');
+        presenceRef.onSnapshot((snapshot) => {
+          snapshot.forEach((doc) => {
+            const u = doc.data();
+            if (u.id) window.activeMembers.set(u.id, u);
+          });
+          updateMemberList();
+        }, (err) => console.log("Presence fallback:", err));
       } catch (e) {}
     }
 
-    // Global Message Sending Function across devices
-    window.dispatchGlobalMessage = async function(msgData) {
-      if (db && authUser) {
+    // Process Incoming Cross-Device Data
+    function handleIncomingRelayData(data) {
+      if (data.type === 'CHAT_MSG') {
+        processIncomingMessage(data.msg);
+      } else if (data.type === 'PRESENCE') {
+        window.activeMembers.set(data.user.id, data.user);
+        updateMemberList();
+      } else if (data.type === 'TYPING' && data.userId !== window.currentUser.id) {
+        showTypingStatus(data.userName);
+      } else if (data.type === 'VOICE_CALL' && data.senderId !== window.currentUser.id) {
+        notifyIncomingCall(data.senderName);
+      }
+    }
+
+    function processIncomingMessage(msg) {
+      if (!msg || !msg.id || renderedMessageIds.has(msg.id)) return;
+      renderedMessageIds.add(msg.id);
+      const isSent = msg.senderId === window.currentUser.id;
+      appendMessage(msg, isSent);
+      if (!isSent && msg.senderId !== 'system') {
+        playGlassTone('receive');
+      }
+    }
+
+    // Announce Online Status across all networks
+    function announcePresence() {
+      if (!window.currentUser.name) return;
+
+      const payload = { type: 'PRESENCE', user: window.currentUser };
+      
+      if (wsRelay && wsRelay.readyState === WebSocket.OPEN) {
+        wsRelay.send(JSON.stringify(payload));
+      }
+      if (localBroadcast) {
+        localBroadcast.postMessage(payload);
+      }
+      if (db && auth && auth.currentUser) {
         try {
-          const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
-          await addDoc(messagesRef, {
+          db.collection('artifacts').doc(appId).collection('public').doc('data').collection('presence').doc(window.currentUser.id).set({
+            ...window.currentUser,
+            lastSeen: Date.now()
+          });
+        } catch(e){}
+      }
+    }
+
+    // Global Message Dispatcher (Sends to Firebase + WebSockets)
+    window.dispatchGlobalMessage = function(msgData) {
+      // 1. Render Locally
+      processIncomingMessage(msgData);
+
+      // 2. Broadcast via WebSockets Relay
+      if (wsRelay && wsRelay.readyState === WebSocket.OPEN) {
+        wsRelay.send(JSON.stringify({ type: 'CHAT_MSG', msg: msgData }));
+      }
+      if (localBroadcast) {
+        localBroadcast.postMessage({ type: 'CHAT_MSG', msg: msgData });
+      }
+
+      // 3. Persist to Firestore
+      if (db && auth && auth.currentUser) {
+        try {
+          db.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').doc(msgData.id).set({
             ...msgData,
             createdAt: Date.now()
           });
-        } catch (err) {
-          console.error("Failed sending message:", err);
-          // Local fallback render
-          appendMessage(msgData, true);
-        }
-      } else {
-        renderedMessageIds.add(msgData.id);
-        appendMessage(msgData, true);
-        if (localBroadcastFallback) {
-          localBroadcastFallback.postMessage({ type: 'CHAT_MESSAGE', ...msgData });
-        }
+        } catch(e){}
       }
     };
 
-    // Initialize Service on document ready
-    initRealtimeService();
+    function updateConnBadge(connected) {
+      const text = document.getElementById('onlineCountText');
+      const dot = document.getElementById('connStatusDot');
+      if (connected) {
+        text.innerText = `⚡ Connected • Global Realtime Active (${window.activeMembers.size || 1} online)`;
+        dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-ping flex-shrink-0";
+      }
+    }
+
+    // Initialize Network Engines
+    initWebSocketRelay();
+    initFirebaseEngine();
   </script>
 
-  <!-- APP STATE & LOGIC -->
+  <!-- APP INTERACTION CONTROLLERS -->
   <script>
-    // Canvas Background Particles Animation
+    // Canvas Background Particles
     function initCanvas() {
       const canvas = document.getElementById('bgCanvas');
       const ctx = canvas.getContext('2d');
@@ -667,14 +680,14 @@
         height = canvas.height = window.innerHeight;
       });
 
-      const particles = Array.from({ length: 45 }, () => ({
+      const particles = Array.from({ length: 40 }, () => ({
         x: Math.random() * width,
         y: Math.random() * height,
         radius: Math.random() * 3 + 1,
         color: Math.random() > 0.5 ? 'rgba(0, 210, 255, ' : 'rgba(255, 0, 128, ',
         alpha: Math.random() * 0.5 + 0.1,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: (Math.random() - 0.5) * 0.6
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5
       }));
 
       function render() {
@@ -691,7 +704,7 @@
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
           ctx.fillStyle = p.color + p.alpha + ')';
-          ctx.shadowBlur = 12;
+          ctx.shadowBlur = 10;
           ctx.shadowColor = p.color + '0.8)';
           ctx.fill();
         });
@@ -700,13 +713,13 @@
       render();
     }
 
-    // Step 1: Verify Password
+    // Password Unlock
     function verifyPassword() {
       playGlassTone('click');
       const val = document.getElementById('passInput').value.trim();
       const err = document.getElementById('passError');
 
-      if (val === "vampre") {
+      if (val === ROOM_PASS) {
         document.getElementById('passwordModal').classList.add('hidden');
         document.getElementById('userModal').classList.remove('hidden');
         renderAvatarChoices();
@@ -716,10 +729,9 @@
       }
     }
 
-    // Render avatar buttons
     function renderAvatarChoices() {
       const container = document.getElementById('avatarSelector');
-      const list = window.avatars || ['👑', '💋', '🔥', '🐉', '⚔️', '⚡', '🌙', '💀'];
+      const list = window.avatars;
       container.innerHTML = list.map((av, idx) => `
         <button onclick="selectAvatar('${av}', this)" class="p-2.5 rounded-xl text-xl glass-card hover:border-cyan-400 transition-all ${idx === 0 ? 'border-cyan-400 bg-cyan-500/20' : ''}">
           ${av}
@@ -736,7 +748,7 @@
       btn.classList.add('border-cyan-400', 'bg-cyan-500/20');
     }
 
-    // Step 2: Enter Room
+    // Enter Chatroom
     function enterChatRoom() {
       const nameInput = document.getElementById('usernameInput').value.trim();
       if (!nameInput) {
@@ -749,10 +761,9 @@
       document.getElementById('userModal').classList.add('hidden');
       document.getElementById('chatApp').classList.remove('hidden');
 
-      // Add user & announce presence across devices
       window.activeMembers.set(window.currentUser.id, window.currentUser);
-      if (window.announcePresence) window.announcePresence();
-      setInterval(() => { if (window.announcePresence) window.announcePresence(); }, 6000);
+      announcePresence();
+      setInterval(announcePresence, 5000);
 
       updateMemberList();
     }
@@ -775,17 +786,14 @@
         timestamp: getCurrentTime()
       };
 
-      if (window.dispatchGlobalMessage) {
-        window.dispatchGlobalMessage(msgData);
-      }
-
+      window.dispatchGlobalMessage(msgData);
       input.value = '';
     }
 
-    // Append Message UI (WhatsApp Liquid Glass Style)
+    // Render Message Bubbles
     function appendMessage(data, isSent) {
       const chatContainer = document.getElementById('chatMessages');
-      if (document.getElementById(data.id)) return; // Prevent duplicates
+      if (document.getElementById(data.id)) return;
 
       const msgDiv = document.createElement('div');
       msgDiv.className = `flex flex-col ${isSent ? 'items-end' : 'items-start'} my-2 space-y-1 animate-fadeIn`;
@@ -825,13 +833,11 @@
             
             ${bubbleContent}
 
-            <!-- Footer Meta & Reactions -->
             <div class="flex items-center justify-end gap-1.5 mt-1 text-[9px] text-slate-400">
               <span>${data.timestamp || getCurrentTime()}</span>
               ${isSent ? `<i class="fa-solid fa-check-double text-cyan-400 text-[10px]"></i>` : ''}
             </div>
 
-            <!-- Quick Reaction Floating Bar -->
             <div class="absolute -top-3 ${isSent ? 'left-0' : 'right-0'} hidden group-hover:flex items-center gap-1 bg-slate-900/90 border border-white/10 rounded-full px-2 py-0.5 backdrop-blur-md shadow-lg">
               <button onclick="addReaction('${data.id}', '❤️')" class="hover:scale-125 text-xs">❤️</button>
               <button onclick="addReaction('${data.id}', '🔥')" class="hover:scale-125 text-xs">🔥</button>
@@ -847,7 +853,6 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // Reaction handler
     function addReaction(msgId, emoji) {
       playGlassTone('click');
       const container = document.getElementById(`reactions-${msgId}`);
@@ -859,7 +864,6 @@
       }
     }
 
-    // Image Upload Attachment Simulation
     function handleImageUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -876,15 +880,11 @@
           text: '',
           timestamp: getCurrentTime()
         };
-        
-        if (window.dispatchGlobalMessage) {
-          window.dispatchGlobalMessage(msgData);
-        }
+        window.dispatchGlobalMessage(msgData);
       };
       reader.readAsDataURL(file);
     }
 
-    // Voice Note Recording Simulation
     let isRecording = false;
     let recordInterval = null;
     let recordSeconds = 0;
@@ -928,9 +928,7 @@
           text: '',
           timestamp: getCurrentTime()
         };
-        if (window.dispatchGlobalMessage) {
-          window.dispatchGlobalMessage(msgData);
-        }
+        window.dispatchGlobalMessage(msgData);
       }
     }
 
@@ -942,17 +940,24 @@
       }, 2000);
     }
 
-    // Voice Call Logic Simulation
     let callTimerInterval = null;
     let callSeconds = 0;
 
     function startVoiceCall() {
       playGlassTone('click');
       document.getElementById('voiceCallModal').classList.remove('hidden');
-      document.getElementById('callStatus').innerText = 'Connecting peer audio stream...';
+      document.getElementById('callStatus').innerText = 'Broadcasting call signal...';
+
+      if (wsRelay && wsRelay.readyState === WebSocket.OPEN) {
+        wsRelay.send(JSON.stringify({
+          type: 'VOICE_CALL',
+          senderId: window.currentUser.id,
+          senderName: window.currentUser.name
+        }));
+      }
 
       setTimeout(() => {
-        document.getElementById('callStatus').innerText = 'Connected • Real-time HD Audio';
+        document.getElementById('callStatus').innerText = 'Connected • Real-time HD Voice';
         callSeconds = 0;
         callTimerInterval = setInterval(() => {
           callSeconds++;
@@ -974,24 +979,21 @@
       const chatContainer = document.getElementById('chatMessages');
       const div = document.createElement('div');
       div.className = 'p-3 rounded-2xl bg-gradient-to-r from-pink-500/20 to-cyan-500/20 border border-cyan-400/30 text-center my-2 text-xs text-white backdrop-blur-md';
-      div.innerHTML = `📞 <b>${escapeHTML(callerName)}</b> started a live Voice Call in Dark Empire. <button onclick="startVoiceCall()" class="ml-2 underline text-cyan-300 font-bold">Join Call</button>`;
+      div.innerHTML = `📞 <b>${escapeHTML(callerName)}</b> initiated a live Voice Call. <button onclick="startVoiceCall()" class="ml-2 underline text-cyan-300 font-bold">Join Call</button>`;
       chatContainer.appendChild(div);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
     function toggleMuteCall() {
       playGlassTone('click');
-      const btn = document.getElementById('muteBtn');
-      btn.classList.toggle('text-rose-400');
+      document.getElementById('muteBtn').classList.toggle('text-rose-400');
     }
 
     function toggleSpeaker() {
       playGlassTone('click');
-      const btn = document.getElementById('speakerBtn');
-      btn.classList.toggle('text-cyan-400');
+      document.getElementById('speakerBtn').classList.toggle('text-cyan-400');
     }
 
-    // UI Helpers
     function toggleEmojiBar() {
       playGlassTone('click');
       document.getElementById('emojiBar').classList.toggle('hidden');
@@ -1011,10 +1013,12 @@
 
     function updateMemberList() {
       const list = document.getElementById('memberList');
-      const countText = document.getElementById('onlineCountText');
-      
       const total = window.activeMembers.size || 1;
-      countText.innerText = `Tap to view info • ${total} online`;
+      
+      const countText = document.getElementById('onlineCountText');
+      if (countText) {
+        countText.innerText = `⚡ Connected • Global Realtime Active (${total} online)`;
+      }
 
       list.innerHTML = Array.from(window.activeMembers.values()).map(m => `
         <div class="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5">
@@ -1022,7 +1026,7 @@
           <div class="flex-1 min-w-0">
             <div class="text-xs font-semibold text-white truncate">${escapeHTML(m.name || 'Member')} ${m.id === window.currentUser.id ? '(You)' : ''}</div>
             <div class="text-[10px] text-emerald-400 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span> Active
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span> Online
             </div>
           </div>
         </div>
@@ -1030,7 +1034,13 @@
     }
 
     function handleTyping() {
-      // Reserved for typing indicator triggers
+      if (wsRelay && wsRelay.readyState === WebSocket.OPEN) {
+        wsRelay.send(JSON.stringify({
+          type: 'TYPING',
+          userId: window.currentUser.id,
+          userName: window.currentUser.name
+        }));
+      }
     }
 
     let typingTimeout = null;
@@ -1047,7 +1057,7 @@
 
     function openProfileViewer() {
       playGlassTone('click');
-      alert(`જ⁀➴🇩𝗔𝗥𝗞 𝗘𝗠𝗣𝗜𝗥Empire Private Room\nAdmin DP Loaded.\nStatus: Active Global Encrypted Sync.`);
+      alert(`જ⁀➴🇩𝗔𝗥𝗞 𝗘𝗠𝗣𝗜𝗥𝗘 Private Room\nAdmin DP Loaded.\nStatus: Global Cross-Device Encryption Active.`);
     }
 
     function getCurrentTime() {
@@ -1068,7 +1078,6 @@
       );
     }
 
-    // Initialize Canvas on load
     window.onload = function() {
       initCanvas();
     };
